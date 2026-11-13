@@ -1,0 +1,45 @@
+==============================================================================
+  E G A   E D I T   1.0
+  a native Turbo Vision style editor
+==============================================================================
+
+This is the AppKit edition. Everything you see is still a character cell:
+80 columns, 25 rows, sixteen EGA colours, an 8x16 bitmap font.
+
+The TUI edition of EGA Edit lives in the same repository, in the parent
+folder. This one has a real window, a real caret and real macOS file panels.
+
+WHAT THIS IS
+------------
+  * an editor window with a double-line frame and a drop shadow
+  * a toolbar under the menu bar: New, Open, Save, Undo, Cut, Copy,
+    Paste, Find. Everything there is one click away.
+  * click the menu bar, the status hints, the close box [■] or zoom [↑]
+  * drag inside the text to select, double-click for a word, triple
+    for a line
+  * right-click the text for Cut, Copy, Paste, Find, Save and Close
+  * drag the scroll bars, use the wheel, or drag the bottom-right
+    corner to resize the window
+  * open, save, save as, undo, the clipboard, find and replace
+
+WHAT IT IS NOT
+--------------
+  No anti-aliasing. No rounded corners. No translucency. No emoji.
+
+FIRST STEPS
+-----------
+  Cmd-N          new window        Cmd-O  open
+  Cmd-S          save              Cmd-Shift-S  save as
+  Cmd-W          close window      Cmd-Q  quit
+  Cmd-Z/X/C/V    undo/cut/copy/paste
+  Cmd-F / Cmd-R  find / replace    Cmd-G  find next
+  F1             keyboard map      F10    menu bar
+  F5 / F6        zoom / next window
+
+Click a window title to drag it, click its text to put the caret there.
+The bottom border of each window shows the line and column, and a sun
+symbol once the buffer has been modified.
+
+------------------------------------------------------------------------------
+  CUA layout, Turbo Vision skeleton, EGA colours, bitmap glyphs.
+------------------------------------------------------------------------------

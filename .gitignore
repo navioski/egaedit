@@ -1,0 +1,10 @@
+# build artifacts
+build/
+.tmux/
+.shots/
+*.log
+.DS_Store
+
+# native app build output
+native/EGA Edit.app/
+native/Resources/AppIcon.iconset/

@@ -1,0 +1,37 @@
+==============================================================================
+  E G A   E D I T   1.0
+  a text editor that looks like 1990
+==============================================================================
+
+Everything on this screen is made of character cells: 80 columns, 25 rows,
+sixteen colours, one bitmap font. There are no pixels here, only glyphs.
+
+WHAT THIS IS
+------------
+  * several editor windows, one file per window
+  * a menu bar, dialogs, scroll bars and a clock
+  * a double-line frame around every window
+  * the EGA palette: black, blue, green, cyan, red, magenta, brown, light gray
+    plus eight brighter cousins
+  * a blue desktop dusted with a dither pattern
+
+WHAT IT IS NOT
+--------------
+  No anti-aliasing. No rounded corners. No translucency. No emoji.
+  The only animation is the blinking cursor.
+
+FIRST STEPS
+-----------
+  F10            open the menu bar
+  F3             open a file          F2   save
+  F4             new document        Ctrl-W close window
+  F1             the keyboard map    F6   next window
+  Ctrl-F / Ctrl-H  find / replace
+  Ctrl-Q or Alt-X  quit
+
+Type something. The status line in the window frame keeps score: line, column
+and an asterisk once the buffer is modified.
+
+------------------------------------------------------------------------------
+  CUA layout, Turbo Vision skeleton, EGA colours, ASCII art.
+------------------------------------------------------------------------------

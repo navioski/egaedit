@@ -1,0 +1,295 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  build-linux-gcc:
+    name: Linux (GCC) (Unity)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Install Dependencies
+      run: sudo apt-get -y --no-install-recommends install libgpm-dev libgtest-dev
+
+    - name: Configure CMake
+      shell: bash
+      run: cmake . -DCMAKE_BUILD_TYPE=Release -DTV_BUILD_TESTS=ON -DTV_REDUCE_APP_SIZE=ON -DTV_LIBRARY_UNITY_BUILD=ON
+
+    - name: Build
+      shell: bash
+      run: cmake --build . -j$(nproc)
+
+  build-linux-gcc5:
+    name: Linux (GCC 5)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Install Dependencies
+      run: |
+        # Add legacy repositories required by g++-5
+        sudo tee --append /etc/apt/sources.list << EOF
+          deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] http://us.archive.ubuntu.com/ubuntu/ bionic universe
+          deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] http://us.archive.ubuntu.com/ubuntu/ bionic main
+        EOF
+        sudo apt-get update
+        sudo apt-get -y --no-install-recommends install g++-5
+
+    - name: Configure CMake
+      shell: bash
+      env:
+        CC: gcc-5
+        CXX: g++-5
+      run: cmake . -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      shell: bash
+      run: cmake --build . -j$(nproc)
+
+  build-linux-clang:
+    name: Linux (Clang)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Install Dependencies
+      run: sudo apt-get -y --no-install-recommends install libncursesw5-dev
+
+    - name: Configure CMake
+      shell: bash
+      env:
+        CC: clang
+        CXX: clang++
+      run: cmake . -DCMAKE_BUILD_TYPE=Release -DTV_OPTIMIZE_BUILD=OFF
+
+    - name: Build
+      shell: bash
+      run: cmake --build . -j$(nproc)
+
+  build-linux-big-endian:
+    name: Linux (GCC) (Big Endian)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Build in container
+      uses: uraimo/run-on-arch-action@v3
+      with:
+        arch: s390x
+        distro: alpine_latest
+        dockerRunArgs: |
+          --volume "${PWD}:/app"
+        env: |
+          LC_CTYPE: C.UTF-8
+        shell: /bin/sh
+        install: apk update && apk add make cmake g++ ncurses-dev gtest-dev linux-headers
+        run: |
+          cd /app
+          cmake . -DCMAKE_BUILD_TYPE= -DTV_BUILD_USING_GPM=OFF -DTV_BUILD_EXAMPLES=OFF -DTV_BUILD_TESTS=ON -DTV_LIBRARY_UNITY_BUILD=ON -DCMAKE_CXX_FLAGS=
+          cmake --build . -j$(nproc)
+
+  build-windows-msvc32:
+    name: Windows (MSVC) (Win32)
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Configure CMake
+      shell: bash
+      run: cmake . -A Win32 -DTV_USE_STATIC_RTL=ON
+
+    - name: Build (Release) (library, apps)
+      shell: bash
+      run: cmake --build . --config Release -- -p:UseMultiToolTask=true -p:CL_MPcount=$(nproc)
+
+    - name: Build (RelWithDebInfo) (library)
+      shell: bash
+      run: cmake --build . --config RelWithDebInfo --target tvision -- -p:UseMultiToolTask=true -p:CL_MPcount=$(nproc)
+
+    - name: Build (Debug) (library)
+      shell: bash
+      run: cmake --build . --config Debug --target tvision -- -p:UseMultiToolTask=true -p:CL_MPcount=$(nproc)
+
+    - name: Upload Examples
+      uses: actions/upload-artifact@v7
+      with:
+        name: examples-x86
+        path: |
+          Release/tvdemo.exe
+          Release/tvedit.exe
+          Release/tvhc.exe
+
+    - name: Upload Library
+      uses: actions/upload-artifact@v7
+      with:
+        name: library-x86
+        path: |
+          Release/tvision.lib
+          RelWithDebInfo/tvision-relwithdebinfo.lib
+          RelWithDebInfo/tvision-relwithdebinfo.pdb
+          Debug/tvision-debug.lib
+          Debug/tvision-debug.pdb
+
+  build-windows-msvc64:
+    name: Windows (MSVC) (x64)
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Configure CMake
+      shell: bash
+      run: cmake . -A x64 -DTV_USE_STATIC_RTL=ON
+
+    - name: Build (Release) (library, apps)
+      shell: bash
+      run: cmake --build . --config Release -- -p:UseMultiToolTask=true -p:CL_MPcount=$(nproc)
+
+    - name: Build (RelWithDebInfo) (library)
+      shell: bash
+      run: cmake --build . --config RelWithDebInfo --target tvision -- -p:UseMultiToolTask=true -p:CL_MPcount=$(nproc)
+
+    - name: Build (Debug) (library)
+      shell: bash
+      run: cmake --build . --config Debug --target tvision -- -p:UseMultiToolTask=true -p:CL_MPcount=$(nproc)
+
+    - name: Upload Examples
+      uses: actions/upload-artifact@v7
+      with:
+        name: examples-x64
+        path: |
+          Release/tvdemo.exe
+          Release/tvedit.exe
+          Release/tvhc.exe
+
+    - name: Upload Library
+      uses: actions/upload-artifact@v7
+      with:
+        name: library-x64
+        path: |
+          Release/tvision.lib
+          RelWithDebInfo/tvision-relwithdebinfo.lib
+          RelWithDebInfo/tvision-relwithdebinfo.pdb
+          Debug/tvision-debug.lib
+          Debug/tvision-debug.pdb
+
+  build-windows-mingw:
+    name: Windows (MinGW)
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Configure CMake
+      shell: bash
+      run: cmake . -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE= -DCMAKE_CXX_FLAGS="-static" -DTV_LIBRARY_UNITY_BUILD=ON
+
+    - name: Build
+      shell: bash
+      run: cmake --build . -j$(nproc)
+
+  build-windows-bcc32:
+    name: Windows (BCC32) (DPMI32)
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Install Build Tools
+      shell: bash
+      run: |
+        curl -LJO "https://github.com/user-attachments/files/31184465/bc45-ci.zip"
+        curl -LJO "https://github.com/user-attachments/files/31184581/tasm4-ci.zip"
+        curl -LJO "https://github.com/user-attachments/files/31240466/bc55-make.zip"
+        unzip bc45-ci.zip -d C:/bc45
+        unzip tasm4-ci.zip -d C:/tasm
+        unzip -o bc55-make.zip -d C:/bc45/bin
+
+    - name: Build
+      shell: bash
+      run: |
+        export PATH="/c/bc45/bin:/c/tasm/bin:$PATH"
+        cd project
+        /c/bc45/bin/make.exe -DDOS32
+
+    - name: Upload Examples
+      uses: actions/upload-artifact@v7
+      with:
+        name: examples-dpmi32
+        path: |
+          examples/tvdemo/tvdemo.EXE
+          examples/tvedit/tvedit.EXE
+          examples/tvhc/tvhc.EXE
+
+    - name: Upload Library
+      uses: actions/upload-artifact@v7
+      with:
+        name: library-dpmi32
+        path: |
+          LIB/TV32.LIB
+
+  build-dos-bcc:
+    name: DOS (BCC)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Install Build Tools
+      run: |
+        sudo add-apt-repository -y ppa:dosemu2/ppa
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends dosemu2
+        curl -LJO "https://github.com/user-attachments/files/31184465/bc45-ci.zip"
+        curl -LJO "https://github.com/user-attachments/files/31184581/tasm4-ci.zip"
+        unzip bc45-ci.zip -d bc45
+        unzip tasm4-ci.zip -d tasm
+
+    - name: Build
+      run: |
+        cat > run.bat << EOF
+          C:
+          CD C:\project
+          SET PATH=C:\bc45\bin;C:\tasm\bin
+          MAKER.EXE
+        EOF
+        sed -i 's/$/\r/' run.bat
+
+        cat > dosemu.conf << 'EOF'
+          $_cpu_vm = "emulated"
+          $_cpu_vm_dpmi = "emulated"
+          $_layout = "us"
+          $_sound = (off)
+        EOF
+
+        dosemu -n -t -ks -f dosemu.conf --Fdrive_c "$PWD" -E 'C:\run.bat'
+
+    - name: Upload Examples
+      uses: actions/upload-artifact@v7
+      with:
+        name: examples-dos
+        path: |
+          examples/tvdemo/tvdemo.exe
+          examples/tvedit/tvedit.exe
+          examples/tvhc/tvhc.exe
+
+    - name: Upload Library
+      uses: actions/upload-artifact@v7
+      with:
+        name: library-dos
+        path: |
+          LIB/tv.lib
+
+  build-macos-clang:
+    name: MacOS (Clang)
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Install Dependencies
+      run: brew install googletest
+
+    - name: Configure CMake
+      shell: bash
+      run: cmake . -DCMAKE_BUILD_TYPE=Release -DTV_BUILD_TESTS=ON
+
+    - name: Build
+      shell: bash
+      run: cmake --build . -j$(sysctl -n hw.logicalcpu)
